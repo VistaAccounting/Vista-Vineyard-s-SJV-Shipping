@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vista Vineyards · SJV Shipping Dashboard · Jul 12, 2026</title>
+<style>
+  :root {
+    --burgundy: #3A1019;
+    --terra:    #B45427;
+    --olive:    #735D26;
+    --espresso: #2B1810;
+    --linen:    #EDECE4;
+    --white:    #FFFFFF;
+    --border:   #D4C9B8;
+    --muted:    #8A7A6A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; background: var(--linen); color: var(--espresso); font-size: 13px; }
+  .nav { background: var(--espresso); display: flex; align-items: center; padding: 0 20px; }
+  .nav-tab { color: rgba(255,255,255,0.6); padding: 13px 20px; cursor: pointer; font-size: 12.5px; letter-spacing: 0.04em; border-bottom: 3px solid transparent; transition: all .2s; font-family: 'Georgia', serif; }
+  .nav-tab.active { color: var(--white); border-bottom-color: var(--terra); }
+  .nav-tab:hover:not(.active) { color: rgba(255,255,255,0.85); }
+  .nav-print-note { margin-left: auto; color: rgba(255,255,255,0.4); font-size: 10.5px; letter-spacing: 0.03em; }
+  .panel { display: none; padding: 20px 22px; }
+  .panel.active { display: block; }
+  .week-bar { display: flex; gap: 7px; margin-bottom: 18px; flex-wrap: wrap; align-items: center; }
+  .pill { padding: 5px 14px; border-radius: 20px; cursor: pointer; font-size: 11.5px; letter-spacing: 0.04em; border: 1.5px solid var(--border); background: var(--white); color: var(--muted); transition: all .15s; }
+  .pill.active { background: var(--burgundy); color: var(--white); border-color: var(--burgundy); }
+  .pill:hover:not(.active) { border-color: var(--terra); color: var(--terra); }
+  .brand-block { background: var(--burgundy); border-radius: 8px; padding: 16px 22px; display: flex; align-items: center; margin-bottom: 16px; }
+  .logo-mark { width: 44px; height: 44px; flex-shrink: 0; margin-right: 18px; }
+  .brand-center { flex: 1; text-align: center; }
+  .brand-eyebrow { color: rgba(255,255,255,0.55); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 3px; }
+  .brand-title { color: var(--white); font-size: 18px; letter-spacing: 0.02em; }
+  .brand-right { text-align: right; flex-shrink: 0; }
+  .brand-asof { color: rgba(255,255,255,0.55); font-size: 10.5px; margin-bottom: 5px; letter-spacing: 0.04em; }
+  .sjv-badge { background: var(--terra); color: var(--white); font-size: 10px; letter-spacing: 0.1em; padding: 3px 10px; border-radius: 20px; display: inline-block; }
+  .kpi-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+  .kpi-section { margin-bottom: 16px; }
+  .kpi-section-label { font-size: 10px; letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase; margin-bottom: 7px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+  .kpi-card { background: var(--white); border: 1px solid var(--border); border-radius: 7px; padding: 13px 15px; }
+  .kpi-card.ytd { border-top: 3px solid var(--olive); }
+  .kpi-label { font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .kpi-val { font-size: 22px; color: var(--burgundy); letter-spacing: -0.01em; line-height: 1; }
+  .kpi-val.money { color: var(--olive); }
+  .kpi-val.price { color: var(--terra); }
+  .kpi-val.small { font-size: 15px; line-height: 1.25; }
+  .chart-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 7px; padding: 16px 18px; margin-bottom: 16px; }
+  .chart-title { font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .chart-legend { display: flex; gap: 16px; margin-top: 8px; justify-content: flex-end; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--muted); }
+  .legend-box { width: 12px; height: 12px; border-radius: 2px; background: var(--burgundy); }
+  .legend-dash { width: 22px; height: 0; border-top: 2px dashed var(--terra); }
+  .tables-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+  .table-wrap { background: var(--white); border: 1px solid var(--border); border-radius: 7px; overflow: hidden; }
+  .table-head { background: var(--burgundy); padding: 9px 14px; display: flex; justify-content: space-between; align-items: center; }
+  .table-head-title { color: var(--white); font-size: 11px; letter-spacing: 0.07em; text-transform: uppercase; }
+  .table-head-sub { color: rgba(255,255,255,0.5); font-size: 9.5px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { background: #F5F2EC; font-size: 9.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--muted); padding: 7px 10px; text-align: right; border-bottom: 1px solid var(--border); }
+  thead th:first-child { text-align: left; }
+  tbody tr:nth-child(even) { background: #FAFAF7; }
+  tbody tr:hover { background: #F0EDE5; }
+  tbody td { padding: 7px 10px; font-size: 11.5px; color: var(--espresso); text-align: right; border-bottom: 1px solid #EDE9DF; vertical-align: middle; }
+  tbody td:first-child { text-align: left; font-size: 11px; }
+  .rank-badge { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: var(--linen); border: 1px solid var(--border); font-size: 9.5px; color: var(--muted); margin-right: 6px; }
+  .rank-badge.top3 { background: var(--terra); border-color: var(--terra); color: var(--white); }
+  .share-bar-cell { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+  .share-bar { width: 48px; height: 6px; background: var(--linen); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+  .share-fill { height: 100%; background: var(--terra); border-radius: 3px; }
+  .variety-fill { background: var(--olive); }
+  .summary-kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 18px; }
+  .grower-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .grower-card { background: var(--white); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .grower-card-header { background: var(--espresso); padding: 10px 14px; }
+  .grower-name { color: var(--white); font-size: 12.5px; margin-bottom: 3px; }
+  .grower-ytd { color: rgba(255,255,255,0.55); font-size: 10px; letter-spacing: 0.04em; }
+  .grower-body { padding: 12px 14px; }
+  .variety-row { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #EDE9DF; }
+  .variety-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .vrow-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+  .vrow-name { font-size: 11.5px; color: var(--espresso); }
+  .vrow-pct { font-size: 11px; color: var(--terra); }
+  .sold-bar { height: 6px; background: var(--linen); border-radius: 3px; overflow: hidden; margin-bottom: 5px; }
+  .sold-fill { height: 100%; background: var(--terra); border-radius: 3px; }
+  .vrow-stats { display: flex; gap: 10px; font-size: 10px; color: var(--muted); flex-wrap: wrap; }
+  .vrow-stats strong { color: var(--espresso); font-size: 10.5px; }
+  .dates-tag { font-size: 9.5px; color: var(--muted); margin-top: 2px; }
+  .footer { text-align: center; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; padding: 14px 0 20px; }
+  @media print {
+    body { background: white; }
+    .nav { display: none; }
+    .week-bar { display: none; }
+    .panel { display: block !important; padding: 14px 16px; }
+    #tab1 { page-break-after: always; }
+    #tab2 { page-break-before: always; }
+    .grower-grid { grid-template-columns: repeat(3,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-tab active" onclick="showTab('tab1',this)">Shipping Overview</div>
+  <div class="nav-tab" onclick="showTab('tab2',this)">SJV Grower Shipping Detail</div>
+  <div class="nav-print-note">Print: select a week pill first &rarr; Cmd+P &rarr; Landscape &middot; Scale 65 &middot; Background graphics ON</div>
+</div>
+
+<!-- TAB 1 -->
+<div class="panel active" id="tab1">
+  <div class="week-bar">
+    <span style="font-size:10.5px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-right:4px;">View:</span>
+    <div class="pill active" onclick="selectPill(this,'YTD')">YTD</div>
+    <div class="pill" onclick="selectPill(this,'Wk 25')">Wk 25 &middot; Jun 15</div>
+    <div class="pill" onclick="selectPill(this,'Wk 26')">Wk 26 &middot; Jun 22</div>
+    <div class="pill" onclick="selectPill(this,'Wk 27')">Wk 27 &middot; Jun 29</div>
+    <div class="pill" onclick="selectPill(this,'Wk 28')">Wk 28 &middot; Jul 6</div>
+  </div>
+
+  <div class="brand-block">
+    <svg class="logo-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="22" cy="22" r="20" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+      <circle cx="22" cy="11" r="3.8" fill="#B45427"/>
+      <circle cx="16" cy="17" r="3.8" fill="#B45427" opacity=".9"/>
+      <circle cx="28" cy="17" r="3.8" fill="#B45427" opacity=".9"/>
+      <circle cx="22" cy="23" r="3.8" fill="#B45427" opacity=".85"/>
+      <circle cx="16" cy="29" r="3.8" fill="#B45427" opacity=".8"/>
+      <circle cx="28" cy="29" r="3.8" fill="#B45427" opacity=".8"/>
+      <circle cx="22" cy="35" r="3.8" fill="#B45427" opacity=".7"/>
+      <line x1="22" y1="7.2" x2="22" y2="4" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="22" y1="4" x2="27" y2="1.5" stroke="rgba(255,255,255,0.35)" stroke-width="1" stroke-linecap="round"/>
+    </svg>
+    <div class="brand-center">
+      <div class="brand-eyebrow">Vista Vineyards &middot; SJV Fruit</div>
+      <div class="brand-title" id="brand-title">Season-to-Date Shipping Overview</div>
+    </div>
+    <div class="brand-right">
+      <div class="brand-asof">As of Jul 12, 2026</div>
+      <div class="sjv-badge">SJV Only</div>
+    </div>
+  </div>
+
+  <div class="kpi-section">
+    <div class="kpi-section-label" id="period-label">Season to Date</div>
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="kpi-label">Total Boxes</div><div class="kpi-val" id="kpi-boxes">223,156</div></div>
+      <div class="kpi-card"><div class="kpi-label">Wtd Avg Price / Box</div><div class="kpi-val price" id="kpi-avg">$29.91</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total Sales</div><div class="kpi-val money" id="kpi-sales">$6,674,188</div></div>
+      <div class="kpi-card"><div class="kpi-label">Top Customer</div><div class="kpi-val small" id="kpi-top">Robinson Fresh</div></div>
+    </div>
+  </div>
+
+  <div class="kpi-section" id="ytd-kpi-section" style="display:none">
+    <div class="kpi-section-label">Season to Date (Reference)</div>
+    <div class="kpi-row">
+      <div class="kpi-card ytd"><div class="kpi-label">YTD Boxes</div><div class="kpi-val">223,156</div></div>
+      <div class="kpi-card ytd"><div class="kpi-label">YTD Avg Price / Box</div><div class="kpi-val price">$29.91</div></div>
+      <div class="kpi-card ytd"><div class="kpi-label">YTD Total Sales</div><div class="kpi-val money">$6,674,188</div></div>
+      <div class="kpi-card ytd"><div class="kpi-label">YTD Top Customer</div><div class="kpi-val small">Robinson Fresh</div></div>
+    </div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-title">Weekly Trend &mdash; Boxes Shipped &amp; Avg Price / Box</div>
+    <svg id="trend-chart" width="100%" height="250" viewBox="0 0 880 250" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-box"></div>Boxes Shipped</div>
+      <div class="legend-item"><div class="legend-dash"></div>Avg $/Box</div>
+    </div>
+  </div>
+
+  <div class="tables-row">
+    <div class="table-wrap">
+      <div class="table-head">
+        <span class="table-head-title">Sales by Variety</span>
+        <span class="table-head-sub" id="var-period-label">Season to Date</span>
+      </div>
+      <table><thead><tr><th>Variety</th><th>Boxes</th><th>Sales</th><th>$/Box</th><th>Share %</th></tr></thead>
+      <tbody id="variety-tbody"></tbody></table>
+    </div>
+    <div class="table-wrap">
+      <div class="table-head">
+        <span class="table-head-title">Top 10 Customers</span>
+        <span class="table-head-sub" id="cust-period-label">Season to Date</span>
+      </div>
+      <table><thead><tr><th>Customer</th><th>Boxes</th><th>Sales</th><th>$/Box</th><th>Share %</th></tr></thead>
+      <tbody id="customer-tbody"></tbody></table>
+    </div>
+  </div>
+  <div class="footer">VISTA VINEYARDS &middot; GROWER INTERNAL &middot; CONSTANT HARVEST &middot; WE FOLLOW THE SUN</div>
+</div>
+
+<!-- TAB 2 -->
+<div class="panel" id="tab2">
+  <div class="brand-block">
+    <svg class="logo-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="22" cy="22" r="20" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+      <circle cx="22" cy="11" r="3.8" fill="#B45427"/>
+      <circle cx="16" cy="17" r="3.8" fill="#B45427" opacity=".9"/>
+      <circle cx="28" cy="17" r="3.8" fill="#B45427" opacity=".9"/>
+      <circle cx="22" cy="23" r="3.8" fill="#B45427" opacity=".85"/>
+      <circle cx="16" cy="29" r="3.8" fill="#B45427" opacity=".8"/>
+      <circle cx="28" cy="29" r="3.8" fill="#B45427" opacity=".8"/>
+      <circle cx="22" cy="35" r="3.8" fill="#B45427" opacity=".7"/>
+      <line x1="22" y1="7.2" x2="22" y2="4" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="22" y1="4" x2="27" y2="1.5" stroke="rgba(255,255,255,0.35)" stroke-width="1" stroke-linecap="round"/>
+    </svg>
+    <div class="brand-center">
+      <div class="brand-eyebrow">Vista Vineyards &middot; SJV Fruit</div>
+      <div class="brand-title">SJV Grower Shipping Detail &mdash; Season to Date</div>
+    </div>
+    <div class="brand-right">
+      <div class="brand-asof">As of Jul 12, 2026</div>
+      <div class="sjv-badge">SJV Only</div>
+    </div>
+  </div>
+  <div class="summary-kpis">
+    <div class="kpi-card"><div class="kpi-label">Active Growers</div><div class="kpi-val">6</div></div>
+    <div class="kpi-card"><div class="kpi-label">YTD Boxes Shipped</div><div class="kpi-val">223,156</div></div>
+    <div class="kpi-card"><div class="kpi-label">YTD Total Sales</div><div class="kpi-val money">$6,674,188</div></div>
+  </div>
+  <div class="grower-grid" id="grower-grid"></div>
+  <div class="footer" style="margin-top:18px;">VISTA VINEYARDS &middot; GROWER INTERNAL &middot; CONSTANT HARVEST &middot; WE FOLLOW THE SUN</div>
+</div>
+
+<script>
+const WEEKLY_TREND = [
+  {week:'Wk 25', label1:'Wk 25', label2:'Jun 15', boxes:7185,   sales:249450.75,   avg:34.72},
+  {week:'Wk 26', label1:'Wk 26', label2:'Jun 22', boxes:47169,  sales:1472536.55,  avg:31.22},
+  {week:'Wk 27', label1:'Wk 27', label2:'Jun 29', boxes:66148,  sales:1977629.14,  avg:29.90},
+  {week:'Wk 28', label1:'Wk 28', label2:'Jul 6',  boxes:102354, sales:2964161.94,  avg:28.96},
+];
+
+const YTD_VARIETIES = [
+  {variety:'Sugraone',        boxes:50473, sales:1538095.10, avg:30.47, share:22.6},
+  {variety:'Ivory',           boxes:36616, sales:1057031.31, avg:28.87, share:16.4},
+  {variety:'Candy Snaps',     boxes:30724, sales:877797.20,  avg:28.57, share:13.8},
+  {variety:'Flames',          boxes:25125, sales:675176.18,  avg:26.87, share:11.3},
+  {variety:'Honey Pop',       boxes:24611, sales:789160.27,  avg:32.07, share:11.0},
+  {variety:'Ruby Rush\u00ae', boxes:24146, sales:745228.07,  avg:30.86, share:10.8},
+  {variety:'Sugrathirteen',   boxes:10820, sales:348668.25,  avg:32.22, share:4.8},
+  {variety:'BiColor',         boxes:10042, sales:339832.60,  avg:33.84, share:4.5},
+  {variety:'IFG Ten',         boxes:5147,  sales:144135.81,  avg:28.00, share:2.3},
+  {variety:'Sugrafiftyseven', boxes:3027,  sales:90038.70,   avg:29.75, share:1.4},
+  {variety:'Summer Royal',    boxes:2425,  sales:69024.89,   avg:28.46, share:1.1},
+];
+
+const YTD_CUSTOMERS = [
+  {customer:'Robinson Fresh',               boxes:61861, sales:1823349.45, avg:29.47, share:27.7},
+  {customer:"Sam's Club",                   boxes:24656, sales:753387.15,  avg:30.56, share:11.0},
+  {customer:'Costco Wholesale Corporation', boxes:22632, sales:639752.40,  avg:28.27, share:10.1},
+  {customer:'Sun Fresh International, LLC', boxes:15895, sales:507907.58,  avg:31.95, share:7.1},
+  {customer:'Hy-Vee, Inc.',                 boxes:15765, sales:410484.64,  avg:26.04, share:7.1},
+  {customer:'Classic Harvest, LLC',         boxes:8463,  sales:245926.35,  avg:29.06, share:3.8},
+  {customer:'Umina Bros., Inc.',            boxes:7740,  sales:244098.00,  avg:31.54, share:3.5},
+  {customer:'ACUMEN FRUIT, S.A. DE C.V.',   boxes:7583,  sales:235290.00,  avg:31.03, share:3.4},
+  {customer:'Costco Wholesale Canada Ltd.', boxes:7402,  sales:211045.90,  avg:28.51, share:3.3},
+  {customer:'Heartland Produce Company',    boxes:6414,  sales:205221.30,  avg:32.00, share:2.9},
+];
+
+const WEEK_DATA = {
+  'Wk 25': {
+    boxes:7185, sales:249450.75, avg:34.72, top_cust:'BONO Importation',
+    varieties:[
+      {variety:'Honey Pop', boxes:3225, sales:120937.50, avg:37.50, share:44.9},
+      {variety:'Flames',    boxes:1980, sales:61281.00,  avg:30.95, share:27.6},
+      {variety:'Sugraone',  boxes:1980, sales:67221.00,  avg:33.95, share:27.6},
+    ],
+    customers:[
+      {customer:'BONO Importation',              boxes:1980, sales:65241.00,  avg:32.95, share:27.6},
+      {customer:'Heartland Produce Company',     boxes:1980, sales:63261.00,  avg:31.95, share:27.6},
+      {customer:'ACUMEN FRUIT, S.A. DE C.V.',    boxes:1950, sales:74100.00,  avg:38.00, share:27.1},
+      {customer:'Paramount Export Company',      boxes:600,  sales:22020.00,  avg:36.70, share:8.4},
+      {customer:'Voita International Produce, Inc.',boxes:450,sales:16515.00, avg:36.70, share:6.3},
+      {customer:'Shirin Trading USA, INC',       boxes:225,  sales:8313.75,   avg:36.95, share:3.1},
+    ]
+  },
+  'Wk 26': {
+    boxes:47169, sales:1472536.55, avg:31.22, top_cust:'Robinson Fresh',
+    varieties:[
+      {variety:'Sugraone',    boxes:16329, sales:501969.66, avg:30.74, share:34.6},
+      {variety:'Honey Pop',   boxes:15957, sales:499582.17, avg:31.31, share:33.8},
+      {variety:'Flames',      boxes:8138,  sales:234293.82, avg:28.79, share:17.3},
+      {variety:'Candy Snaps', boxes:3545,  sales:113829.95, avg:32.11, share:7.5},
+      {variety:'BiColor',     boxes:3200,  sales:122880.00, avg:38.40, share:6.8},
+    ],
+    customers:[
+      {customer:'Robinson Fresh',               boxes:15448, sales:494502.48, avg:32.01, share:32.8},
+      {customer:"Sam's Club",                   boxes:11520, sales:372326.40, avg:32.32, share:24.4},
+      {customer:'Costco Wholesale Corporation', boxes:5752,  sales:160839.40, avg:27.97, share:12.2},
+      {customer:'Hy-Vee, Inc.',                 boxes:3690,  sales:103174.40, avg:27.96, share:7.8},
+      {customer:'Umina Bros., Inc.',            boxes:3600,  sales:115380.00, avg:32.05, share:7.6},
+      {customer:'Heartland Produce Company',    boxes:2484,  sales:79218.96,  avg:31.89, share:5.3},
+      {customer:'Classic Harvest, LLC',         boxes:1980,  sales:62271.00,  avg:31.45, share:4.2},
+      {customer:'Devoy Marketing',              boxes:810,   sales:26146.80,  avg:32.28, share:1.7},
+      {customer:'CDS Distributing, Inc.',       boxes:700,   sales:20678.00,  avg:29.54, share:1.5},
+      {customer:'Shirin Trading USA, INC',      boxes:415,   sales:14205.45,  avg:34.23, share:0.9},
+    ]
+  },
+  'Wk 27': {
+    boxes:66148, sales:1977629.14, avg:29.90, top_cust:'Robinson Fresh',
+    varieties:[
+      {variety:'Sugraone',       boxes:28882, sales:879032.12, avg:30.46, share:43.7},
+      {variety:'Flames',         boxes:8089,  sales:215572.85, avg:26.65, share:12.2},
+      {variety:'Ivory',          boxes:6585,  sales:183593.15, avg:27.88, share:10.0},
+      {variety:'Honey Pop',      boxes:5429,  sales:168659.03, avg:31.07, share:8.2},
+      {variety:'Ruby Rush\u00ae',boxes:5358,  sales:162883.20, avg:30.40, share:8.1},
+      {variety:'Candy Snaps',    boxes:3925,  sales:112019.50, avg:28.54, share:5.9},
+      {variety:'BiColor',        boxes:3840,  sales:125068.80, avg:32.57, share:5.8},
+      {variety:'Sugrathirteen',  boxes:1780,  sales:61837.20,  avg:34.74, share:2.7},
+      {variety:'Summer Royal',   boxes:1735,  sales:50133.15,  avg:28.89, share:2.6},
+      {variety:'Sugrafiftyseven',boxes:525,   sales:17918.25,  avg:34.13, share:0.8},
+    ],
+    customers:[
+      {customer:'Robinson Fresh',               boxes:28626, sales:840411.36, avg:29.36, share:43.3},
+      {customer:'Sun Fresh International, LLC', boxes:6459,  sales:207657.85, avg:32.15, share:9.8},
+      {customer:"Sam's Club",                   boxes:5760,  sales:178272.00, avg:30.95, share:8.7},
+      {customer:'Costco Wholesale Corporation', boxes:5280,  sales:141504.00, avg:26.80, share:8.0},
+      {customer:'Umina Bros., Inc.',            boxes:3600,  sales:111420.00, avg:30.95, share:5.4},
+      {customer:'Hy-Vee, Inc.',                 boxes:2970,  sales:83160.00,  avg:28.00, share:4.5},
+      {customer:'Paramount Export Company',     boxes:1830,  sales:62301.20,  avg:34.04, share:2.8},
+      {customer:'USA Union International, Inc.',boxes:1800,  sales:57060.00,  avg:31.70, share:2.7},
+      {customer:'Darrigo New York',             boxes:1681,  sales:48481.04,  avg:28.84, share:2.5},
+      {customer:'Jack Tuchten Wholesale Produce, Inc.',boxes:1635,sales:49164.45,avg:30.07,share:2.5},
+    ]
+  },
+  'Wk 28': {
+    boxes:102354, sales:2964161.94, avg:28.96, top_cust:'Robinson Fresh',
+    varieties:[
+      {variety:'Ivory',          boxes:30031, sales:873701.08, avg:29.09, share:29.3},
+      {variety:'Candy Snaps',    boxes:23254, sales:651960.16, avg:28.04, share:22.7},
+      {variety:'Ruby Rush\u00ae',boxes:18788, sales:582428.00, avg:31.00, share:18.4},
+      {variety:'Sugrathirteen',  boxes:8740,  sales:276443.20, avg:31.63, share:8.5},
+      {variety:'Flames',         boxes:6918,  sales:164028.12, avg:23.71, share:6.8},
+      {variety:'IFG Ten',        boxes:5147,  sales:144135.81, avg:28.00, share:5.0},
+      {variety:'Sugraone',       boxes:3282,  sales:89072.46,  avg:27.13, share:3.2},
+      {variety:'BiColor',        boxes:3002,  sales:91891.12,  avg:30.61, share:2.9},
+      {variety:'Sugrafiftyseven',boxes:2502,  sales:72132.66,  avg:28.83, share:2.4},
+      {variety:'Summer Royal',   boxes:690,   sales:18906.30,  avg:27.40, share:0.7},
+    ],
+    customers:[
+      {customer:'Robinson Fresh',               boxes:17787, sales:488344.65, avg:27.45, share:17.4},
+      {customer:'Costco Wholesale Corporation', boxes:11600, sales:337444.00, avg:29.09, share:11.3},
+      {customer:'Sun Fresh International, LLC', boxes:9436,  sales:300249.52, avg:31.82, share:9.2},
+      {customer:'Hy-Vee, Inc.',                 boxes:9105,  sales:224150.10, avg:24.62, share:8.9},
+      {customer:'Costco Wholesale Canada Ltd.', boxes:7402,  sales:211045.90, avg:28.51, share:7.2},
+      {customer:"Sam's Club",                   boxes:7376,  sales:202840.00, avg:27.50, share:7.2},
+      {customer:'Classic Harvest, LLC',         boxes:6213,  sales:175641.51, avg:28.27, share:6.1},
+      {customer:'ACUMEN FRUIT, S.A. DE C.V.',   boxes:5633,  sales:161276.46, avg:28.63, share:5.5},
+      {customer:'USA Union International, Inc.',boxes:3345,  sales:112607.15, avg:33.67, share:3.3},
+      {customer:'Costco Wholesale Japan, Ltd.', boxes:3200,  sales:103776.00, avg:32.43, share:3.1},
+    ]
+  }
+};
+
+const GROWER_DATA = [
+  {name:'CountyLine Vineyards', ytd_boxes:92325,
+   varieties:[
+    {variety:'Sugraone',  received:57729, shipped:50473, pct:87.4, first:'Jun 20', last:'Jul 10'},
+    {variety:'Flames',    received:33852, shipped:23365, pct:69.0, first:'Jun 20', last:'Jul 10'},
+    {variety:'BiColor',   received:0,     shipped:8042,  pct:0,    first:'Jun 23', last:'Jul 09'},
+    {variety:'Ivory',     received:21544, shipped:6873,  pct:31.9, first:'Jul 03', last:'Jul 10'},
+    {variety:'IFG Ten',   received:9402,  shipped:3572,  pct:38.0, first:'Jul 07', last:'Jul 10'},
+   ]},
+  {name:'FG Globe Vineyards, LLC', ytd_boxes:52388,
+   varieties:[
+    {variety:'Candy Snaps',    received:63889, shipped:26667, pct:41.7, first:'Jun 25', last:'Jul 11'},
+    {variety:'Ruby Rush\u00ae',received:35519, shipped:24146, pct:68.0, first:'Jul 01', last:'Jul 11'},
+    {variety:'IFG Ten',        received:6801,  shipped:1575,  pct:23.2, first:'Jul 10', last:'Jul 10'},
+   ]},
+  {name:'Road 156 Grape Vineyards, LLC', ytd_boxes:43235,
+   varieties:[
+    {variety:'Honey Pop',       received:24934, shipped:24611, pct:98.7, first:'Jun 18', last:'Jul 02'},
+    {variety:'Sugrathirteen',   received:32876, shipped:10820, pct:32.9, first:'Jul 03', last:'Jul 11'},
+    {variety:'Candy Snaps',     received:28280, shipped:4057,  pct:14.3, first:'Jun 26', last:'Jul 11'},
+    {variety:'Sugrafiftyseven', received:6129,  shipped:3027,  pct:49.4, first:'Jul 02', last:'Jul 10'},
+    {variety:'BiColor',         received:0,     shipped:720,   pct:0,    first:'Jul 09', last:'Jul 10'},
+   ]},
+  {name:'Maven Grapes II, LLC', ytd_boxes:15367,
+   varieties:[
+    {variety:'Ivory', received:29782, shipped:15367, pct:51.6, first:'Jul 02', last:'Jul 11'},
+   ]},
+  {name:'NRG Farms, Inc', ytd_boxes:14376,
+   varieties:[
+    {variety:'Ivory', received:28768, shipped:14376, pct:50.0, first:'Jul 03', last:'Jul 11'},
+   ]},
+  {name:'La Jolla', ytd_boxes:5465,
+   varieties:[
+    {variety:'Flames',        received:1760, shipped:1760, pct:100,  first:'Jun 24', last:'Jun 30'},
+    {variety:'BiColor',       received:880,  shipped:1280, pct:100,  first:'Jul 01', last:'Jul 09'},
+    {variety:'Summer Royal',  received:2850, shipped:2425, pct:85.1, first:'Jun 30', last:'Jul 11'},
+    {variety:'IFG Ten',       received:336,  shipped:0,    pct:0,    first:'N/A',    last:'N/A'},
+    {variety:'Sugrathirteen', received:765,  shipped:0,    pct:0,    first:'N/A',    last:'N/A'},
+   ]},
+];
+
+function fmt(n)  { return (+n).toLocaleString('en-US',{maximumFractionDigits:0}); }
+function fmtS(n) { return '$'+(+n).toLocaleString('en-US',{maximumFractionDigits:0}); }
+function fmtP(n) { return '$'+(+n).toFixed(2); }
+
+function drawChart(hlWeek) {
+  const svg = document.getElementById('trend-chart');
+  // Layout: viewBox 880x250. Reserve 20px at top for bar labels, 36px bottom for week labels.
+  // Chart area: x=68..812, y=20..214  (cW=744, cH=194)
+  const W=880, pL=68, pR=68, yTop=20, yBot=214, xL=pL, xR=W-pR;
+  const cW=xR-xL, cH=yBot-yTop;
+  const n=WEEKLY_TREND.length;
+  const bW=Math.floor(cW/n*0.52);
+
+  const maxB=Math.max(...WEEKLY_TREND.map(d=>d.boxes));
+  // Scale bars to 90% of chart height so even the tallest bar's label fits in the top 10%
+  const barScale=0.90;
+  const minP=Math.min(...WEEKLY_TREND.map(d=>d.avg))-1.5;
+  const maxP=Math.max(...WEEKLY_TREND.map(d=>d.avg))+1.5;
+  let s='';
+
+  // Gridlines + axis labels (5 lines)
+  for(let i=0;i<=4;i++){
+    const y=yTop+cH*i/4;
+    s+=`<line x1="${xL}" y1="${y}" x2="${xR}" y2="${y}" stroke="#E5DFD4" stroke-width="1"/>`;
+    s+=`<text x="${xL-6}" y="${y+4}" text-anchor="end" font-size="9.5" fill="#8A7A6A" font-family="Georgia,serif">${fmt(Math.round(maxB*(1-i/4)/1000)*1000)}</text>`;
+    s+=`<text x="${xR+6}" y="${y+4}" text-anchor="start" font-size="9.5" fill="#B45427" font-family="Georgia,serif">$${(maxP-(maxP-minP)*i/4).toFixed(2)}</text>`;
+  }
+
+  // Bars + labels
+  WEEKLY_TREND.forEach((d,i)=>{
+    const cx=xL+(i+0.5)*cW/n;
+    const bh=(d.boxes/maxB)*cH*barScale;
+    const barY=yBot-bh;
+    const isHL=hlWeek===d.week;
+    const fill=isHL?'#B45427':'#3A1019';
+    const op=(hlWeek&&!isHL)?'0.3':'1';
+    s+=`<rect x="${cx-bW/2}" y="${barY}" width="${bW}" height="${bh}" fill="${fill}" opacity="${op}" rx="2"/>`;
+    // Label above bar — guaranteed room because barScale=0.90 means tallest bar top = yTop + cH*0.10
+    s+=`<text x="${cx}" y="${barY-5}" text-anchor="middle" font-size="9" fill="${fill}" opacity="${op}" font-family="Georgia,serif">${fmt(d.boxes)}</text>`;
+    // Week labels below chart area
+    s+=`<text x="${cx}" y="${yBot+14}" text-anchor="middle" font-size="9.5" fill="#6A5A4A" font-family="Georgia,serif">${d.label1}</text>`;
+    s+=`<text x="${cx}" y="${yBot+25}" text-anchor="middle" font-size="9" fill="#A09080" font-family="Georgia,serif">${d.label2}</text>`;
+  });
+
+  // Price line + dots + labels
+  const pts=WEEKLY_TREND.map((d,i)=>({
+    x: xL+(i+0.5)*cW/n,
+    y: yBot-((d.avg-minP)/(maxP-minP))*cH,
+    avg: d.avg, week: d.week
+  }));
+  s+=`<defs><marker id="arr" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#B45427"/></marker></defs>`;
+  s+=`<path d="${pts.map((p,i)=>`${i?'L':'M'}${p.x},${p.y}`).join('')}" fill="none" stroke="#B45427" stroke-width="2" stroke-dasharray="6,3.5"/>`;
+  pts.forEach((p,i)=>{
+    const op=(hlWeek&&hlWeek!==p.week)?'0.3':'1';
+    s+=`<circle cx="${p.x}" cy="${p.y}" r="4" fill="#B45427" opacity="${op}"/>`;
+    // Wk 26 (i=1): label overlaps bar label — move it up and right with arrow
+    if(i===1){
+      const lx=p.x+42, ly=p.y-18;
+      s+=`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="9" fill="#B45427" opacity="${op}" font-family="Georgia,serif">$${p.avg.toFixed(2)}</text>`;
+      s+=`<line x1="${lx-8}" y1="${ly+1}" x2="${p.x+5}" y2="${p.y-5}" stroke="#B45427" stroke-width="1" opacity="${op}" marker-end="url(#arr)"/>`;
+    } else {
+      s+=`<text x="${p.x}" y="${p.y-9}" text-anchor="middle" font-size="9" fill="#B45427" opacity="${op}" font-family="Georgia,serif">$${p.avg.toFixed(2)}</text>`;
+    }
+  });
+
+  svg.innerHTML=s;
+}
+
+function renderVarietyTable(data) {
+  const maxS=Math.max(...data.map(d=>d.share));
+  document.getElementById('variety-tbody').innerHTML=data.filter(d=>d.boxes>0).map(d=>`
+    <tr><td>${d.variety}</td><td>${fmt(d.boxes)}</td><td>${fmtS(d.sales)}</td><td>${fmtP(d.avg)}</td>
+    <td><div class="share-bar-cell"><span>${d.share}%</span>
+      <div class="share-bar"><div class="share-fill variety-fill" style="width:${(d.share/maxS*100).toFixed(1)}%"></div></div>
+    </div></td></tr>`).join('');
+}
+
+function renderCustomerTable(data) {
+  const maxS=Math.max(...data.map(d=>d.share));
+  document.getElementById('customer-tbody').innerHTML=data.filter(d=>d.boxes>0).map((d,i)=>`
+    <tr><td><span class="rank-badge${i<3?' top3':''}">${i+1}</span>${d.customer}</td>
+    <td>${fmt(d.boxes)}</td><td>${fmtS(d.sales)}</td><td>${fmtP(d.avg)}</td>
+    <td><div class="share-bar-cell"><span>${d.share}%</span>
+      <div class="share-bar"><div class="share-fill" style="width:${(d.share/maxS*100).toFixed(1)}%"></div></div>
+    </div></td></tr>`).join('');
+}
+
+function renderGrowerCards() {
+  document.getElementById('grower-grid').innerHTML=GROWER_DATA.map(g=>`
+    <div class="grower-card">
+      <div class="grower-card-header">
+        <div class="grower-name">${g.name}</div>
+        <div class="grower-ytd">${fmt(g.ytd_boxes)} boxes YTD</div>
+      </div>
+      <div class="grower-body">
+        ${g.varieties.map(v=>{
+          const pct=Math.min(v.pct,100);
+          return `<div class="variety-row">
+            <div class="vrow-top">
+              <span class="vrow-name">${v.variety}</span>
+              <span class="vrow-pct" style="${v.shipped===0?'color:var(--muted)':''}">${pct.toFixed(1)}% sold</span>
+            </div>
+            <div class="sold-bar"><div class="sold-fill" style="width:${pct}%;${v.shipped===0?'background:var(--border)':''}"></div></div>
+            <div class="vrow-stats">
+              <div><strong>${v.received>0?fmt(v.received):'—'}</strong> recv</div>
+              <div><strong>${fmt(v.shipped)}</strong> shipped</div>
+            </div>
+            <div class="dates-tag">${v.first!=='N/A'?v.first+' \u2013 '+v.last:'Not yet shipped'}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+const WK_DATES={'Wk 25':'Jun 15\u201321','Wk 26':'Jun 22\u201328','Wk 27':'Jun 29\u2013Jul 5','Wk 28':'Jul 6\u201312'};
+
+function selectPill(el,period) {
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  updateTab1(period);
+}
+
+function updateTab1(period) {
+  const isYTD=period==='YTD';
+  const label=isYTD?'Season to Date':(period+' ('+WK_DATES[period]+')');
+  document.getElementById('brand-title').textContent=isYTD?'Season-to-Date Shipping Overview':(period+' Shipping Overview \u2014 '+WK_DATES[period]);
+  document.getElementById('period-label').textContent=label;
+  document.getElementById('var-period-label').textContent=label;
+  document.getElementById('cust-period-label').textContent=label;
+  document.getElementById('ytd-kpi-section').style.display=isYTD?'none':'block';
+  const d=isYTD?{boxes:223156,sales:6674188.38,avg:29.91,top_cust:'Robinson Fresh'}:WEEK_DATA[period];
+  document.getElementById('kpi-boxes').textContent=fmt(d.boxes);
+  document.getElementById('kpi-avg').textContent=fmtP(d.avg);
+  document.getElementById('kpi-sales').textContent=fmtS(d.sales);
+  document.getElementById('kpi-top').textContent=d.top_cust;
+  renderVarietyTable(isYTD?YTD_VARIETIES:WEEK_DATA[period].varieties);
+  renderCustomerTable(isYTD?YTD_CUSTOMERS:WEEK_DATA[period].customers);
+  drawChart(isYTD?null:period);
+}
+
+function showTab(tabId,navEl) {
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  navEl.classList.add('active');
+}
+
+updateTab1('YTD');
+renderGrowerCards();
+</script>
+</body>
+</html>
