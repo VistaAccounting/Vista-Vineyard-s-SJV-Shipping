@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vista Vineyards · SJV Shipping Dashboard · Jul 27, 2026</title>
+<style>
+  :root{--burgundy:#3A1019;--terra:#B45427;--olive:#735D26;--espresso:#2B1810;--linen:#EDECE4;--white:#FFFFFF;--border:#D4C9B8;--muted:#8A7A6A;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Georgia',serif;background:var(--linen);color:var(--espresso);font-size:13px;}
+  .nav{background:var(--espresso);display:flex;align-items:center;padding:0 20px;}
+  .nav-tab{color:rgba(255,255,255,0.6);padding:13px 20px;cursor:pointer;font-size:12.5px;letter-spacing:0.04em;border-bottom:3px solid transparent;transition:all .2s;font-family:'Georgia',serif;}
+  .nav-tab.active{color:var(--white);border-bottom-color:var(--terra);}
+  .nav-tab:hover:not(.active){color:rgba(255,255,255,0.85);}
+  .nav-print-note{margin-left:auto;color:rgba(255,255,255,0.4);font-size:10.5px;letter-spacing:0.03em;}
+  .panel{display:none;padding:20px 22px;}
+  .panel.active{display:block;}
+  .week-bar{display:flex;gap:7px;margin-bottom:18px;flex-wrap:wrap;align-items:center;}
+  .pill{padding:5px 14px;border-radius:20px;cursor:pointer;font-size:11.5px;letter-spacing:0.04em;border:1.5px solid var(--border);background:var(--white);color:var(--muted);transition:all .15s;}
+  .pill.active{background:var(--burgundy);color:var(--white);border-color:var(--burgundy);}
+  .pill:hover:not(.active){border-color:var(--terra);color:var(--terra);}
+  .brand-block{background:var(--burgundy);border-radius:8px;padding:16px 22px;display:flex;align-items:center;margin-bottom:16px;}
+  .logo-mark{width:44px;height:44px;flex-shrink:0;margin-right:18px;}
+  .brand-center{flex:1;text-align:center;}
+  .brand-eyebrow{color:rgba(255,255,255,0.55);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:3px;}
+  .brand-title{color:var(--white);font-size:18px;letter-spacing:0.02em;}
+  .brand-right{text-align:right;flex-shrink:0;}
+  .brand-asof{color:rgba(255,255,255,0.55);font-size:10.5px;margin-bottom:5px;letter-spacing:0.04em;}
+  .sjv-badge{background:var(--terra);color:var(--white);font-size:10px;letter-spacing:0.1em;padding:3px 10px;border-radius:20px;display:inline-block;}
+  .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .kpi-section{margin-bottom:16px;}
+  .kpi-section-label{font-size:10px;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:7px;border-bottom:1px solid var(--border);padding-bottom:4px;}
+  .kpi-card{background:var(--white);border:1px solid var(--border);border-radius:7px;padding:13px 15px;}
+  .kpi-card.ytd{border-top:3px solid var(--olive);}
+  .kpi-label{font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+  .kpi-val{font-size:22px;color:var(--burgundy);letter-spacing:-0.01em;line-height:1;}
+  .kpi-val.money{color:var(--olive);}
+  .kpi-val.price{color:var(--terra);}
+  .kpi-val.small{font-size:14px;line-height:1.25;}
+  .chart-wrap{background:var(--white);border:1px solid var(--border);border-radius:7px;padding:16px 18px;margin-bottom:16px;}
+  .chart-title{font-size:11px;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+  .chart-legend{display:flex;gap:16px;margin-top:8px;justify-content:flex-end;}
+  .legend-item{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--muted);}
+  .legend-box{width:12px;height:12px;border-radius:2px;background:var(--burgundy);}
+  .legend-dash{width:22px;height:0;border-top:2px dashed var(--terra);}
+  .tables-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+  .table-wrap{background:var(--white);border:1px solid var(--border);border-radius:7px;overflow:hidden;}
+  .table-head{background:var(--burgundy);padding:9px 14px;display:flex;justify-content:space-between;align-items:center;}
+  .table-head-title{color:var(--white);font-size:11px;letter-spacing:0.07em;text-transform:uppercase;}
+  .table-head-sub{color:rgba(255,255,255,0.5);font-size:9.5px;}
+  table{width:100%;border-collapse:collapse;}
+  thead th{background:#F5F2EC;font-size:9.5px;letter-spacing:0.07em;text-transform:uppercase;color:var(--muted);padding:7px 10px;text-align:right;border-bottom:1px solid var(--border);}
+  thead th:first-child{text-align:left;}
+  tbody tr:nth-child(even){background:#FAFAF7;}
+  tbody tr:hover{background:#F0EDE5;}
+  tbody td{padding:7px 10px;font-size:11.5px;color:var(--espresso);text-align:right;border-bottom:1px solid #EDE9DF;vertical-align:middle;}
+  tbody td:first-child{text-align:left;font-size:11px;}
+  .rank-badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--linen);border:1px solid var(--border);font-size:9.5px;color:var(--muted);margin-right:6px;}
+  .rank-badge.top3{background:var(--terra);border-color:var(--terra);color:var(--white);}
+  .share-bar-cell{display:flex;align-items:center;gap:6px;justify-content:flex-end;}
+  .share-bar{width:48px;height:6px;background:var(--linen);border-radius:3px;overflow:hidden;flex-shrink:0;}
+  .share-fill{height:100%;background:var(--terra);border-radius:3px;}
+  .variety-fill{background:var(--olive);}
+  .summary-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px;}
+  .grower-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+  .grower-card{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;}
+  .grower-card-header{background:var(--espresso);padding:10px 14px;}
+  .grower-name{color:var(--white);font-size:12px;margin-bottom:3px;}
+  .grower-ytd{color:rgba(255,255,255,0.55);font-size:10px;letter-spacing:0.04em;}
+  .grower-body{padding:12px 14px;}
+  .variety-row{margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid #EDE9DF;}
+  .variety-row:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+  .vrow-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;}
+  .vrow-name{font-size:11px;color:var(--espresso);}
+  .vrow-pct{font-size:10.5px;color:var(--terra);}
+  .sold-bar{height:6px;background:var(--linen);border-radius:3px;overflow:hidden;margin-bottom:4px;}
+  .sold-fill{height:100%;background:var(--terra);border-radius:3px;}
+  .vrow-stats{display:flex;gap:10px;font-size:10px;color:var(--muted);}
+  .vrow-stats strong{color:var(--espresso);font-size:10.5px;}
+  .dates-tag{font-size:9px;color:var(--muted);margin-top:2px;}
+  .footer{text-align:center;font-size:10px;color:var(--muted);letter-spacing:0.08em;padding:14px 0 20px;}
+  @media print{
+    body{background:white;}
+    .nav{display:none;}
+    .week-bar{display:none;}
+    .panel{display:block!important;padding:14px 16px;}
+    #tab1{page-break-after:always;}
+    #tab2{page-break-before:always;}
+    .grower-grid{grid-template-columns:repeat(4,1fr);}
+  }
+</style>
+</head>
+<body>
+
+<div class="nav">
+  <div class="nav-tab active" onclick="showTab('tab1',this)">Shipping Overview</div>
+  <div class="nav-tab" onclick="showTab('tab2',this)">SJV Grower Shipping Detail</div>
+  <div class="nav-print-note">Print: select a week pill first &rarr; Cmd+P &rarr; Landscape &middot; Scale 65 &middot; Background graphics ON</div>
+</div>
+
+<!-- TAB 1 -->
+<div class="panel active" id="tab1">
+  <div class="week-bar">
+    <span style="font-size:10.5px;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-right:4px;">View:</span>
+    <div class="pill active" onclick="selectPill(this,'YTD')">YTD</div>
+    <div class="pill" onclick="selectPill(this,'Wk 25')">Wk 25 &middot; Jun 15</div>
+    <div class="pill" onclick="selectPill(this,'Wk 26')">Wk 26 &middot; Jun 22</div>
+    <div class="pill" onclick="selectPill(this,'Wk 27')">Wk 27 &middot; Jun 29</div>
+    <div class="pill" onclick="selectPill(this,'Wk 28')">Wk 28 &middot; Jul 6</div>
+    <div class="pill" onclick="selectPill(this,'Wk 29')">Wk 29 &middot; Jul 13</div>
+    <div class="pill" onclick="selectPill(this,'Wk 30')">Wk 30 &middot; Jul 20</div>
+  </div>
+
+  <div class="brand-block">
+    <svg class="logo-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="22" cy="22" r="20" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+      <circle cx="22" cy="11" r="3.8" fill="#B45427"/>
+      <circle cx="16" cy="17" r="3.8" fill="#B45427" opacity=".9"/>
+      <circle cx="28" cy="17" r="3.8" fill="#B45427" opacity=".9"/>
+      <circle cx="22" cy="23" r="3.8" fill="#B45427" opacity=".85"/>
+      <circle cx="16" cy="29" r="3.8" fill="#B45427" opacity=".8"/>
+      <circle cx="28" cy="29" r="3.8" fill="#B45427" opacity=".8"/>
+      <circle cx="22" cy="35" r="3.8" fill="#B45427" opacity=".7"/>
+      <line x1="22" y1="7.2" x2="22" y2="4" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="22" y1="4" x2="27" y2="1.5" stroke="rgba(255,255,255,0.35)" stroke-width="1" stroke-linecap="round"/>
+    </svg>
+    <div class="brand-center">
+      <div class="brand-eyebrow">Vista Vineyards &middot; SJV Fruit</div>
+      <div class="brand-title" id="brand-title">Season-to-Date Shipping Overview</div>
+    </div>
+    <div class="brand-right">
+      <div class="brand-asof">As of Jul 27, 2026</div>
+      <div class="sjv-badge">SJV Only</div>
+    </div>
+  </div>
+
+  <div class="kpi-section">
+    <div class="kpi-section-label" id="period-label">Season to Date</div>
+    <div class="kpi-row">
+      <div class="kpi-card"><div class="kpi-label">Total Boxes</div><div class="kpi-val" id="kpi-boxes">497,131</div></div>
+      <div class="kpi-card"><div class="kpi-label">Wtd Avg Price / Box</div><div class="kpi-val price" id="kpi-avg">$28.24</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total Sales</div><div class="kpi-val money" id="kpi-sales">$14,036,824</div></div>
+      <div class="kpi-card"><div class="kpi-label">Top Customer</div><div class="kpi-val small" id="kpi-top">Robinson Fresh</div></div>
+    </div>
+  </div>
+
+  <div class="kpi-section" id="ytd-kpi-section" style="display:none">
+    <div class="kpi-section-label">Season to Date (Reference)</div>
+    <div class="kpi-row">
+      <div class="kpi-card ytd"><div class="kpi-label">YTD Boxes</div><div class="kpi-val">497,131</div></div>
+      <div class="kpi-card ytd"><div class="kpi-label">YTD Avg Price / Box</div><div class="kpi-val price">$28.24</div></div>
+      <div class="kpi-card ytd"><div class="kpi-label">YTD Total Sales</div><div class="kpi-val money">$14,036,824</div></div>
+      <div class="kpi-card ytd"><div class="kpi-label">YTD Top Customer</div><div class="kpi-val small">Robinson Fresh</div></div>
+    </div>
+  </div>
+
+  <div class="chart-wrap">
+    <div class="chart-title">Weekly Trend &mdash; Boxes Shipped &amp; Avg Price / Box</div>
+    <svg id="trend-chart" width="100%" height="260" viewBox="0 0 1000 260" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-box"></div>Boxes Shipped</div>
+      <div class="legend-item"><div class="legend-dash"></div>Avg $/Box</div>
+    </div>
+  </div>
+
+  <div class="tables-row">
+    <div class="table-wrap">
+      <div class="table-head"><span class="table-head-title">Sales by Variety</span><span class="table-head-sub" id="var-period-label">Season to Date</span></div>
+      <table><thead><tr><th>Variety</th><th>Boxes</th><th>Sales</th><th>$/Box</th><th>Share %</th></tr></thead>
+      <tbody id="variety-tbody"></tbody></table>
+    </div>
+    <div class="table-wrap">
+      <div class="table-head"><span class="table-head-title">Top 10 Customers</span><span class="table-head-sub" id="cust-period-label">Season to Date</span></div>
+      <table><thead><tr><th>Customer</th><th>Boxes</th><th>Sales</th><th>$/Box</th><th>Share %</th></tr></thead>
+      <tbody id="customer-tbody"></tbody></table>
+    </div>
+  </div>
+  <div class="footer">VISTA VINEYARDS &middot; GROWER INTERNAL &middot; CONSTANT HARVEST &middot; WE FOLLOW THE SUN</div>
+</div>
+
+<!-- TAB 2 -->
+<div class="panel" id="tab2">
+  <div class="brand-block">
+    <svg class="logo-mark" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="22" cy="22" r="20" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+      <circle cx="22" cy="11" r="3.8" fill="#B45427"/>
+      <circle cx="16" cy="17" r="3.8" fill="#B45427" opacity=".9"/>
+      <circle cx="28" cy="17" r="3.8" fill="#B45427" opacity=".9"/>
+      <circle cx="22" cy="23" r="3.8" fill="#B45427" opacity=".85"/>
+      <circle cx="16" cy="29" r="3.8" fill="#B45427" opacity=".8"/>
+      <circle cx="28" cy="29" r="3.8" fill="#B45427" opacity=".8"/>
+      <circle cx="22" cy="35" r="3.8" fill="#B45427" opacity=".7"/>
+      <line x1="22" y1="7.2" x2="22" y2="4" stroke="rgba(255,255,255,0.5)" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="22" y1="4" x2="27" y2="1.5" stroke="rgba(255,255,255,0.35)" stroke-width="1" stroke-linecap="round"/>
+    </svg>
+    <div class="brand-center">
+      <div class="brand-eyebrow">Vista Vineyards &middot; SJV Fruit</div>
+      <div class="brand-title">SJV Grower Shipping Detail &mdash; Season to Date</div>
+    </div>
+    <div class="brand-right">
+      <div class="brand-asof">As of Jul 27, 2026</div>
+      <div class="sjv-badge">SJV Only</div>
+    </div>
+  </div>
+  <div class="summary-kpis">
+    <div class="kpi-card"><div class="kpi-label">Active Growers</div><div class="kpi-val">8</div></div>
+    <div class="kpi-card"><div class="kpi-label">YTD Boxes Shipped</div><div class="kpi-val">547,159</div></div>
+    <div class="kpi-card"><div class="kpi-label">YTD Total Sales</div><div class="kpi-val money">$14,036,824</div></div>
+  </div>
+  <div class="grower-grid" id="grower-grid"></div>
+  <div class="footer" style="margin-top:18px;">VISTA VINEYARDS &middot; GROWER INTERNAL &middot; CONSTANT HARVEST &middot; WE FOLLOW THE SUN</div>
+</div>
+
+<script>
+const WEEKLY_TREND=[
+  {week:'Wk 25',label1:'Wk 25',label2:'Jun 15',boxes:7185,  sales:249450.75,  avg:34.72},
+  {week:'Wk 26',label1:'Wk 26',label2:'Jun 22',boxes:47491, sales:1481678.45, avg:31.20},
+  {week:'Wk 27',label1:'Wk 27',label2:'Jun 29',boxes:66148, sales:1968879.08, avg:29.76},
+  {week:'Wk 28',label1:'Wk 28',label2:'Jul 6', boxes:110208,sales:3184536.40, avg:28.90},
+  {week:'Wk 29',label1:'Wk 29',label2:'Jul 13',boxes:158838,sales:4387906.33, avg:27.63},
+  {week:'Wk 30',label1:'Wk 30',label2:'Jul 20',boxes:154994,sales:3994904.14, avg:25.77},
+];
+
+const YTD_VARIETIES=[
+  {variety:'Ivory',         boxes:149385,sales:3788184.14,avg:25.36,share:27.3},
+  {variety:'Ruby Rush\u00ae',boxes:67822,sales:2072858.45,avg:30.56,share:12.4},
+  {variety:'Candy Snaps',   boxes:66756, sales:1941646.17,avg:29.09,share:12.2},
+  {variety:'Sugraone',      boxes:50946, sales:1538084.07,avg:30.19,share:9.3},
+  {variety:'Sweet Globe',       boxes:49394, sales:1196989.92,avg:24.23,share:9.0},
+  {variety:'Midnight Beauty\u00ae', boxes:40384, sales:1221360.97,avg:30.24,share:7.4},
+  {variety:'Flames',        boxes:30762, sales:802922.32, avg:26.10,share:5.6},
+  {variety:'Honey Pop',     boxes:24933, sales:797821.57, avg:32.00,share:4.6},
+  {variety:'Candy Hearts',  boxes:18954, sales:574897.06, avg:30.33,share:3.5},
+  {variety:'BiColor',       boxes:18028, sales:575166.20, avg:31.90,share:3.3},
+  {variety:'Krissy',        boxes:10107, sales:271375.20, avg:26.85,share:1.8},
+  {variety:'Timpson',    boxes:7610,  sales:191229.35, avg:25.13,share:1.4},
+  {variety:'Sugrafiftyseven',boxes:7005, sales:199945.39, avg:28.54,share:1.3},
+  {variety:'Summer Royal',  boxes:2850,  sales:79656.22,  avg:27.95,share:0.5},
+  {variety:'Sweet Celebration',    boxes:1675,  sales:51157.05,  avg:30.54,share:0.3},
+  {variety:'Sugra60',       boxes:233,   sales:6829.07,   avg:29.31,share:0.0},
+];
+
+const YTD_CUSTOMERS=[
+  {customer:'Robinson Fresh',               boxes:111097,sales:3141894.54,avg:28.28,share:20.3},
+  {customer:'Costco Wholesale Corporation', boxes:71992, sales:2041647.13,avg:28.36,share:13.2},
+  {customer:"Sam's Club",                   boxes:44076, sales:1311940.92,avg:29.77,share:8.1},
+  {customer:'Sun Fresh International, LLC', boxes:39512, sales:1198722.57,avg:30.34,share:7.2},
+  {customer:'ACUMEN FRUIT, S.A. DE C.V.',   boxes:39330, sales:557100.00, avg:14.16,share:7.2},
+  {customer:'Costco Wholesale Canada Ltd.', boxes:36030, sales:1031678.50,avg:28.63,share:6.6},
+  {customer:'Costco Wholesale Japan, Ltd.', boxes:33569, sales:1038787.25,avg:30.94,share:6.1},
+  {customer:'Hy-Vee, Inc.',                 boxes:28827, sales:735897.64, avg:25.53,share:5.3},
+  {customer:'Classic Harvest, LLC',         boxes:17981, sales:479176.45, avg:26.65,share:3.3},
+  {customer:'Darrigo New York',             boxes:13441, sales:380862.95, avg:28.34,share:2.5},
+];
+
+const WEEK_DATA={
+  'Wk 25':{boxes:7185,sales:249450.75,avg:34.72,top_cust:'BONO Importation',
+    varieties:[
+      {variety:'Honey Pop',boxes:3225,sales:120937.50,avg:37.50,share:44.9},
+      {variety:'Flames',   boxes:1980,sales:61281.00, avg:30.95,share:27.6},
+      {variety:'Sugraone', boxes:1980,sales:67221.00, avg:33.95,share:27.6},
+    ],
+    customers:[
+      {customer:'BONO Importation',             boxes:1980,sales:65241.00, avg:32.95,share:27.6},
+      {customer:'Heartland Produce Company',    boxes:1980,sales:63261.00, avg:31.95,share:27.6},
+      {customer:'ACUMEN FRUIT, S.A. DE C.V.',   boxes:1950,sales:74100.00, avg:38.00,share:27.1},
+      {customer:'Paramount Export Company',     boxes:600, sales:22020.00, avg:36.70,share:8.4},
+      {customer:'Voita International Produce',  boxes:450, sales:16515.00, avg:36.70,share:6.3},
+      {customer:'Shirin Trading USA, INC',      boxes:225, sales:8313.75,  avg:36.95,share:3.1},
+    ]},
+  'Wk 26':{boxes:47491,sales:1481678.45,avg:31.20,top_cust:'Robinson Fresh',
+    varieties:[
+      {variety:'Sugraone',  boxes:16329,sales:501969.66,avg:30.74,share:34.4},
+      {variety:'Honey Pop', boxes:16279,sales:509258.62,avg:31.28,share:34.3},
+      {variety:'Flames',    boxes:8138, sales:234293.82,avg:28.79,share:17.1},
+      {variety:'Candy Snaps',boxes:3545,sales:113829.95,avg:32.11,share:7.5},
+      {variety:'BiColor',   boxes:3200, sales:122880.00,avg:38.40,share:6.7},
+    ],
+    customers:[
+      {customer:'Robinson Fresh',               boxes:15770,sales:503939.80,avg:31.96,share:33.2},
+      {customer:"Sam's Club",                   boxes:11520,sales:372326.40,avg:32.32,share:24.3},
+      {customer:'Costco Wholesale Corporation', boxes:5752, sales:160839.40,avg:27.95,share:12.1},
+      {customer:'Hy-Vee, Inc.',                 boxes:3690, sales:103170.30,avg:27.96,share:7.8},
+      {customer:'Umina Bros., Inc.',            boxes:3600, sales:115380.00,avg:32.05,share:7.6},
+      {customer:'Heartland Produce Company',    boxes:2484, sales:79218.96, avg:31.89,share:5.2},
+      {customer:'Classic Harvest, LLC',         boxes:1980, sales:62271.00, avg:31.45,share:4.2},
+      {customer:'Devoy Marketing',              boxes:810,  sales:26146.80, avg:32.28,share:1.7},
+      {customer:'CDS Distributing, Inc.',       boxes:700,  sales:20678.00, avg:29.54,share:1.5},
+      {customer:'Shirin Trading USA, INC',      boxes:415,  sales:14205.45, avg:34.23,share:0.9},
+    ]},
+  'Wk 27':{boxes:66148,sales:1968879.08,avg:29.76,top_cust:'Robinson Fresh',
+    varieties:[
+      {variety:'Sugraone',      boxes:28882,sales:872000.00,avg:30.19,share:43.7},
+      {variety:'Flames',        boxes:8089, sales:215572.85,avg:26.65,share:12.2},
+      {variety:'Ivory',         boxes:6585, sales:183400.00,avg:27.84,share:10.0},
+      {variety:'Honey Pop',     boxes:5429, sales:168259.00,avg:30.99,share:8.2},
+      {variety:'Ruby Rush\u00ae',boxes:5358,sales:162883.20,avg:30.40,share:8.1},
+      {variety:'Candy Snaps',   boxes:3925, sales:112019.50,avg:28.54,share:5.9},
+      {variety:'BiColor',       boxes:3840, sales:125068.80,avg:32.57,share:5.8},
+      {variety:'Midnight Beauty\u00ae', boxes:1780, sales:61837.20, avg:34.74,share:2.7},
+      {variety:'Summer Royal',  boxes:1735, sales:50133.15, avg:28.89,share:2.6},
+      {variety:'Sugrafiftyseven',boxes:525, sales:17918.25, avg:34.13,share:0.8},
+    ],
+    customers:[
+      {customer:'Robinson Fresh',               boxes:28626,sales:840000.00,avg:29.36,share:43.3},
+      {customer:'Sun Fresh International, LLC', boxes:6459, sales:207000.00,avg:32.05,share:9.8},
+      {customer:"Sam's Club",                   boxes:5760, sales:177523.20,avg:30.82,share:8.7},
+      {customer:'Costco Wholesale Corporation', boxes:5280, sales:141504.00,avg:26.80,share:8.0},
+      {customer:'Umina Bros., Inc.',            boxes:3600, sales:111420.00,avg:30.95,share:5.4},
+      {customer:'Hy-Vee, Inc.',                 boxes:2970, sales:75274.20, avg:25.34,share:4.5},
+      {customer:'Paramount Export Company',     boxes:1830, sales:62301.20, avg:34.04,share:2.8},
+      {customer:'USA Union International, Inc.',boxes:1800, sales:57060.00, avg:31.70,share:2.7},
+      {customer:'Darrigo New York',             boxes:1681, sales:48481.04, avg:28.84,share:2.5},
+      {customer:'Jack Tuchten Wholesale Produce',boxes:1635,sales:49164.45,avg:30.07,share:2.5},
+    ]},
+  'Wk 28':{boxes:110208,sales:3184536.40,avg:28.90,top_cust:'Robinson Fresh',
+    varieties:[
+      {variety:'Ivory',          boxes:36140,sales:1043160.00,avg:28.87,share:32.8},
+      {variety:'Candy Snaps',    boxes:23254,sales:652362.00, avg:28.07,share:21.1},
+      {variety:'Ruby Rush\u00ae',boxes:18788,sales:581833.00, avg:30.97,share:17.0},
+      {variety:'Midnight Beauty\u00ae',  boxes:9040, sales:286739.20, avg:31.72,share:8.2},
+      {variety:'Flames',         boxes:6918, sales:164028.12, avg:23.72,share:6.3},
+      {variety:'Sweet Globe',        boxes:5147, sales:144135.81, avg:28.00,share:4.7},
+      {variety:'BiColor',        boxes:4447, sales:135839.00, avg:30.54,share:4.0},
+      {variety:'Sugraone',       boxes:3282, sales:84510.00,  avg:25.75,share:3.0},
+      {variety:'Sugrafiftyseven',boxes:2502, sales:72132.66,  avg:28.83,share:2.3},
+      {variety:'Summer Royal',   boxes:690,  sales:18906.30,  avg:27.40,share:0.6},
+    ],
+    customers:[
+      {customer:'Robinson Fresh',               boxes:19042,sales:528265.00,avg:27.74,share:17.3},
+      {customer:'Costco Wholesale Corporation', boxes:11600,sales:337444.00,avg:29.09,share:10.5},
+      {customer:"Sam's Club",                   boxes:11520,sales:314496.00,avg:27.30,share:10.5},
+      {customer:'Sun Fresh International, LLC', boxes:11256,sales:353094.00,avg:31.37,share:10.2},
+      {customer:'Hy-Vee, Inc.',                 boxes:9105, sales:224974.50,avg:24.71,share:8.3},
+      {customer:'Costco Wholesale Canada Ltd.', boxes:7520, sales:214320.00,avg:28.50,share:6.8},
+      {customer:'Classic Harvest, LLC',         boxes:6213, sales:171272.00,avg:27.57,share:5.6},
+      {customer:'ACUMEN FRUIT, S.A. DE C.V.',   boxes:5850, sales:167737.50,avg:28.67,share:5.3},
+      {customer:'USA Union International, Inc.',boxes:3345, sales:111670.00,avg:33.39,share:3.0},
+      {customer:'Costco Wholesale Japan, Ltd.', boxes:3200, sales:104064.00,avg:32.52,share:2.9},
+    ]},
+  'Wk 29':{boxes:158838,sales:4387906.33,avg:27.63,top_cust:'Costco Wholesale Corporation',
+    varieties:[
+      {variety:'Ivory',          boxes:65284,sales:1703906.00,avg:26.10,share:41.1},
+      {variety:'Ruby Rush\u00ae',boxes:27366,sales:824736.24, avg:30.14,share:17.2},
+      {variety:'Candy Snaps',    boxes:19822,sales:580229.00, avg:29.27,share:12.5},
+      {variety:'Midnight Beauty\u00ae',  boxes:18075,sales:548310.00, avg:30.34,share:11.4},
+      {variety:'Sweet Globe',        boxes:9351, sales:217544.00, avg:23.26,share:5.9},
+      {variety:'BiColor',        boxes:4800, sales:139920.00, avg:29.15,share:3.0},
+      {variety:'Flames',         boxes:4655, sales:105729.05, avg:22.71,share:2.9},
+      {variety:'Candy Hearts',   boxes:3100, sales:95232.00,  avg:30.72,share:2.0},
+      {variety:'Krissy',         boxes:2660, sales:76235.60,  avg:28.66,share:1.7},
+      {variety:'Timpson',     boxes:1442, sales:36381.46,  avg:25.23,share:0.9},
+    ],
+    customers:[
+      {customer:'Costco Wholesale Corporation', boxes:27840,sales:793746.00,avg:28.51,share:17.5},
+      {customer:'Robinson Fresh',               boxes:26978,sales:725706.00,avg:26.90,share:17.0},
+      {customer:'Costco Wholesale Japan, Ltd.', boxes:17600,sales:543120.00,avg:30.86,share:11.1},
+      {customer:'Sun Fresh International, LLC', boxes:15900,sales:467619.00,avg:29.41,share:10.0},
+      {customer:'Costco Wholesale Canada Ltd.', boxes:13870,sales:399373.00,avg:28.79,share:8.7},
+      {customer:'ACUMEN FRUIT, S.A. DE C.V.',   boxes:9840, sales:98400.00, avg:10.00,share:6.2},
+      {customer:'Hy-Vee, Inc.',                 boxes:9102, sales:237016.00,avg:26.04,share:5.7},
+      {customer:'Darrigo New York',             boxes:4830, sales:139104.00,avg:28.80,share:3.0},
+      {customer:'Classic Harvest, LLC',         boxes:4545, sales:115443.00,avg:25.40,share:2.9},
+      {customer:"Sam's Club",                   boxes:3771, sales:105341.00,avg:27.94,share:2.4},
+    ]},
+  'Wk 30':{boxes:154994,sales:3994904.14,avg:25.77,top_cust:'ACUMEN FRUIT, S.A. DE C.V.',
+    varieties:[
+      {variety:'Ivory',         boxes:41376,sales:857787.00,avg:20.73,share:26.7},
+      {variety:'Sweet Globe',       boxes:34896,sales:835234.00,avg:23.94,share:22.5},
+      {variety:'Ruby Rush\u00ae',boxes:16310,sales:503155.50,avg:30.85,share:10.5},
+      {variety:'Candy Snaps',   boxes:16210,sales:482324.00,avg:29.77,share:10.5},
+      {variety:'Candy Hearts',  boxes:15854,sales:479665.06,avg:30.26,share:10.2},
+      {variety:'Midnight Beauty\u00ae', boxes:11489,sales:324474.77,avg:28.24,share:7.4},
+      {variety:'Krissy',        boxes:6457, sales:172832.00,avg:26.76,share:4.2},
+      {variety:'Timpson',    boxes:5178, sales:134477.89,avg:25.97,share:3.3},
+      {variety:'Sugrafiftyseven',boxes:2593,sales:73094.39, avg:28.19,share:1.7},
+      {variety:'BiColor',       boxes:1741, sales:51596.60, avg:29.63,share:1.1},
+    ],
+    customers:[
+      {customer:'ACUMEN FRUIT, S.A. DE C.V.',   boxes:21690,sales:216900.00,avg:10.00,share:14.0},
+      {customer:'Costco Wholesale Corporation', boxes:21520,sales:608115.20,avg:28.26,share:13.9},
+      {customer:'Robinson Fresh',               boxes:20681,sales:543908.00,avg:26.30,share:13.3},
+      {customer:'Costco Wholesale Canada Ltd.', boxes:14640,sales:418032.00,avg:28.55,share:9.4},
+      {customer:'Costco Wholesale Japan, Ltd.', boxes:12769,sales:391597.73,avg:30.67,share:8.2},
+      {customer:"Sam's Club",                   boxes:11505,sales:342208.80,avg:29.75,share:7.4},
+      {customer:'Sun Fresh International, LLC', boxes:5897, sales:170295.79,avg:28.88,share:3.8},
+      {customer:'Voita International Produce',  boxes:5034, sales:168588.66,avg:33.49,share:3.2},
+      {customer:'Darrigo New York',             boxes:4980, sales:131979.90,avg:26.50,share:3.2},
+      {customer:'Classic Harvest, LLC',         boxes:4973, sales:122086.00,avg:24.55,share:3.2},
+    ]},
+};
+
+const GROWER_DATA=[
+  {name:'FG Globe Vineyards, LLC',ytd_boxes:152846,varieties:[
+    {variety:'Ruby Rush\u00ae',received:71078,shipped:67822,pct:95.4,first:'Jul 01',last:'Jul 25'},
+    {variety:'Candy Snaps',   received:75553,shipped:48206,pct:63.8,first:'Jun 25',last:'Jul 25'},
+    {variety:'Sweet Globe',       received:60641,shipped:21158,pct:34.9,first:'Jul 10',last:'Jul 25'},
+    {variety:'Candy Hearts',  received:40507,shipped:10239,pct:25.3,first:'Jul 16',last:'Jul 25'},
+    {variety:'Sweet Celebration',    received:6133, shipped:1675, pct:27.3,first:'Jul 24',last:'Jul 25'},
+    {variety:'BiColor',       received:0,    shipped:3746, pct:0,   first:'Jul 13',last:'Jul 24'},
+  ]},
+  {name:'CountyLine Vineyards',ytd_boxes:127417,varieties:[
+    {variety:'Sugraone',  received:57729,shipped:50946,pct:88.3,first:'Jun 20',last:'Jul 17'},
+    {variety:'Flames',    received:37648,shipped:29002,pct:77.0,first:'Jun 20',last:'Jul 24'},
+    {variety:'Ivory',     received:28903,shipped:21472,pct:74.3,first:'Jul 03',last:'Jul 25'},
+    {variety:'Krissy',    received:11094,shipped:8232, pct:74.2,first:'Jul 16',last:'Jul 25'},
+    {variety:'Sweet Globe',   received:26725,shipped:9723, pct:36.4,first:'Jul 07',last:'Jul 25'},
+    {variety:'BiColor',   received:0,    shipped:8042, pct:0,   first:'Jun 23',last:'Jul 09'},
+  ]},
+  {name:'Road 156 Grape Vineyards, LLC',ytd_boxes:102754,varieties:[
+    {variety:'Honey Pop',       received:24934,shipped:24933,pct:100.0,first:'Jun 18',last:'Jul 02'},
+    {variety:'Midnight Beauty\u00ae',   received:88305,shipped:39979,pct:45.3, first:'Jul 03',last:'Jul 25'},
+    {variety:'Candy Snaps',     received:28280,shipped:18550,pct:65.6, first:'Jun 26',last:'Jul 25'},
+    {variety:'Candy Hearts',    received:22983,shipped:8715, pct:37.9, first:'Jul 20',last:'Jul 25'},
+    {variety:'Sugrafiftyseven', received:8544, shipped:7005, pct:82.0, first:'Jul 02',last:'Jul 24'},
+    {variety:'Sweet Globe',         received:6373, shipped:1899, pct:29.8, first:'Jul 22',last:'Jul 23'},
+    {variety:'BiColor',         received:0,    shipped:1440, pct:0,    first:'Jul 09',last:'Jul 14'},
+    {variety:'Sugra60',         received:1235, shipped:233,  pct:18.9, first:'Jul 21',last:'Jul 22'},
+  ]},
+  {name:'Maven Grapes II, LLC',ytd_boxes:63102,varieties:[
+    {variety:'Ivory',received:70809,shipped:63102,pct:89.1,first:'Jul 02',last:'Jul 25'},
+  ]},
+  {name:'Maven Grapes, LLC.',ytd_boxes:49713,varieties:[
+    {variety:'Ivory',     received:39164,shipped:29579,pct:75.5,first:'Jul 06',last:'Jul 25'},
+    {variety:'Sweet Globe',   received:73825,shipped:16614,pct:22.5,first:'Jul 14',last:'Jul 25'},
+    {variety:'BiColor',   received:0,    shipped:3520, pct:0,   first:'Jul 07',last:'Jul 16'},
+  ]},
+  {name:'NRG Farms, Inc',ytd_boxes:35232,varieties:[
+    {variety:'Ivory',received:41212,shipped:35232,pct:85.5,first:'Jul 03',last:'Jul 25'},
+  ]},
+  {name:'3G, LLC',ytd_boxes:9485,varieties:[
+    {variety:'Timpson',received:16732,shipped:7610, pct:45.5,first:'Jul 15',last:'Jul 25'},
+    {variety:'Krissy',    received:10212,shipped:1875, pct:18.4,first:'Jul 21',last:'Jul 25'},
+    {variety:'Berry Snap',received:12887,shipped:0,    pct:0,   first:'N/A',   last:'N/A'},
+  ]},
+  {name:'La Jolla',ytd_boxes:6295,varieties:[
+    {variety:'Flames',       received:1760,shipped:1760,pct:100.0,first:'Jun 24',last:'Jun 30'},
+    {variety:'Summer Royal', received:2850,shipped:2850,pct:100.0,first:'Jun 30',last:'Jul 18'},
+    {variety:'BiColor',      received:880, shipped:1280,pct:100.0,first:'Jul 01',last:'Jul 09'},
+    {variety:'Midnight Beauty\u00ae',received:765, shipped:405, pct:52.9, first:'Jul 15',last:'Jul 22'},
+    {variety:'Sweet Globe',      received:336, shipped:0,   pct:0,    first:'N/A',   last:'N/A'},
+  ]},
+];
+
+function fmt(n){return(+n).toLocaleString('en-US',{maximumFractionDigits:0});}
+function fmtS(n){return'$'+(+n).toLocaleString('en-US',{maximumFractionDigits:0});}
+function fmtP(n){return'$'+(+n).toFixed(2);}
+
+function drawChart(hlWeek){
+  const svg=document.getElementById('trend-chart');
+  const W=1000,pL=72,pR=72,yTop=22,yBot=224,xL=pL,xR=W-pR;
+  const cW=xR-xL,cH=yBot-yTop;
+  const n=WEEKLY_TREND.length;
+  const bW=Math.floor(cW/n*0.50);
+  const maxB=Math.max(...WEEKLY_TREND.map(d=>d.boxes));
+  const barScale=0.88;
+  const minP=Math.min(...WEEKLY_TREND.map(d=>d.avg))-1.5;
+  const maxP=Math.max(...WEEKLY_TREND.map(d=>d.avg))+1.5;
+  let s='';
+  for(let i=0;i<=4;i++){
+    const y=yTop+cH*i/4;
+    s+=`<line x1="${xL}" y1="${y}" x2="${xR}" y2="${y}" stroke="#E5DFD4" stroke-width="1"/>`;
+    s+=`<text x="${xL-6}" y="${y+4}" text-anchor="end" font-size="9" fill="#8A7A6A" font-family="Georgia,serif">${fmt(Math.round(maxB*(1-i/4)/1000)*1000)}</text>`;
+    s+=`<text x="${xR+6}" y="${y+4}" text-anchor="start" font-size="9" fill="#B45427" font-family="Georgia,serif">$${(maxP-(maxP-minP)*i/4).toFixed(2)}</text>`;
+  }
+  WEEKLY_TREND.forEach((d,i)=>{
+    const cx=xL+(i+0.5)*cW/n;
+    const bh=(d.boxes/maxB)*cH*barScale;
+    const barY=yBot-bh;
+    const isHL=hlWeek===d.week;
+    const fill=isHL?'#B45427':'#3A1019';
+    const op=(hlWeek&&!isHL)?'0.3':'1';
+    s+=`<rect x="${cx-bW/2}" y="${barY}" width="${bW}" height="${bh}" fill="${fill}" opacity="${op}" rx="2"/>`;
+    s+=`<text x="${cx}" y="${barY-5}" text-anchor="middle" font-size="8.5" fill="${fill}" opacity="${op}" font-family="Georgia,serif">${fmt(d.boxes)}</text>`;
+    s+=`<text x="${cx}" y="${yBot+14}" text-anchor="middle" font-size="9" fill="#6A5A4A" font-family="Georgia,serif">${d.label1}</text>`;
+    s+=`<text x="${cx}" y="${yBot+25}" text-anchor="middle" font-size="8.5" fill="#A09080" font-family="Georgia,serif">${d.label2}</text>`;
+  });
+  const pts=WEEKLY_TREND.map((d,i)=>({x:xL+(i+0.5)*cW/n,y:yBot-((d.avg-minP)/(maxP-minP))*cH,avg:d.avg,week:d.week}));
+  s+=`<defs><marker id="arr" markerWidth="5" markerHeight="5" refX="3" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#B45427"/></marker></defs>`;
+  s+=`<path d="${pts.map((p,i)=>`${i?'L':'M'}${p.x},${p.y}`).join('')}" fill="none" stroke="#B45427" stroke-width="2" stroke-dasharray="6,3.5"/>`;
+  pts.forEach((p,i)=>{
+    const op=(hlWeek&&hlWeek!==p.week)?'0.3':'1';
+    s+=`<circle cx="${p.x}" cy="${p.y}" r="4" fill="#B45427" opacity="${op}"/>`;
+    // Wk26 (i=1): offset label to avoid overlap with bar label
+    if(i===1){
+      const lx=p.x+44,ly=p.y-16;
+      s+=`<text x="${lx}" y="${ly}" text-anchor="middle" font-size="8.5" fill="#B45427" opacity="${op}" font-family="Georgia,serif">$${p.avg.toFixed(2)}</text>`;
+      s+=`<line x1="${lx-10}" y1="${ly+1}" x2="${p.x+5}" y2="${p.y-5}" stroke="#B45427" stroke-width="1" opacity="${op}" marker-end="url(#arr)"/>`;
+    } else {
+      s+=`<text x="${p.x}" y="${p.y-9}" text-anchor="middle" font-size="8.5" fill="#B45427" opacity="${op}" font-family="Georgia,serif">$${p.avg.toFixed(2)}</text>`;
+    }
+  });
+  svg.innerHTML=s;
+}
+
+function renderVarietyTable(data){
+  const maxS=Math.max(...data.map(d=>d.share));
+  document.getElementById('variety-tbody').innerHTML=data.filter(d=>d.boxes>0).map(d=>`
+    <tr><td>${d.variety}</td><td>${fmt(d.boxes)}</td><td>${fmtS(d.sales)}</td><td>${fmtP(d.avg)}</td>
+    <td><div class="share-bar-cell"><span>${d.share}%</span>
+    <div class="share-bar"><div class="share-fill variety-fill" style="width:${(d.share/maxS*100).toFixed(1)}%"></div></div></div></td></tr>`).join('');
+}
+
+function renderCustomerTable(data){
+  const maxS=Math.max(...data.map(d=>d.share));
+  document.getElementById('customer-tbody').innerHTML=data.filter(d=>d.boxes>0).map((d,i)=>`
+    <tr><td><span class="rank-badge${i<3?' top3':''}">${i+1}</span>${d.customer}</td>
+    <td>${fmt(d.boxes)}</td><td>${fmtS(d.sales)}</td><td>${fmtP(d.avg)}</td>
+    <td><div class="share-bar-cell"><span>${d.share}%</span>
+    <div class="share-bar"><div class="share-fill" style="width:${(d.share/maxS*100).toFixed(1)}%"></div></div></div></td></tr>`).join('');
+}
+
+function renderGrowerCards(){
+  document.getElementById('grower-grid').innerHTML=GROWER_DATA.map(g=>`
+    <div class="grower-card">
+      <div class="grower-card-header">
+        <div class="grower-name">${g.name}</div>
+        <div class="grower-ytd">${fmt(g.ytd_boxes)} boxes YTD</div>
+      </div>
+      <div class="grower-body">
+        ${g.varieties.map(v=>{
+          const pct=Math.min(v.pct,100);
+          return`<div class="variety-row">
+            <div class="vrow-top"><span class="vrow-name">${v.variety}</span><span class="vrow-pct" style="${v.shipped===0?'color:var(--muted)':''}">${pct.toFixed(1)}% sold</span></div>
+            <div class="sold-bar"><div class="sold-fill" style="width:${pct}%;${v.shipped===0?'background:var(--border)':''}"></div></div>
+            <div class="vrow-stats"><div><strong>${v.received>0?fmt(v.received):'—'}</strong> recv</div><div><strong>${fmt(v.shipped)}</strong> shipped</div></div>
+            <div class="dates-tag">${v.first!=='N/A'?v.first+' \u2013 '+v.last:'Not yet shipped'}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('');
+}
+
+const WK_DATES={'Wk 25':'Jun 15\u201321','Wk 26':'Jun 22\u201328','Wk 27':'Jun 29\u2013Jul 5','Wk 28':'Jul 6\u201312','Wk 29':'Jul 13\u201319','Wk 30':'Jul 20\u201326'};
+
+function selectPill(el,period){
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  updateTab1(period);
+}
+
+function updateTab1(period){
+  const isYTD=period==='YTD';
+  const label=isYTD?'Season to Date':(period+' ('+WK_DATES[period]+')');
+  document.getElementById('brand-title').textContent=isYTD?'Season-to-Date Shipping Overview':(period+' Shipping Overview \u2014 '+WK_DATES[period]);
+  document.getElementById('period-label').textContent=label;
+  document.getElementById('var-period-label').textContent=label;
+  document.getElementById('cust-period-label').textContent=label;
+  document.getElementById('ytd-kpi-section').style.display=isYTD?'none':'block';
+  const d=isYTD?{boxes:497131,sales:14036823.87,avg:28.24,top_cust:'Robinson Fresh'}:WEEK_DATA[period];
+  document.getElementById('kpi-boxes').textContent=fmt(d.boxes);
+  document.getElementById('kpi-avg').textContent=fmtP(d.avg);
+  document.getElementById('kpi-sales').textContent=fmtS(d.sales);
+  document.getElementById('kpi-top').textContent=d.top_cust;
+  renderVarietyTable(isYTD?YTD_VARIETIES:WEEK_DATA[period].varieties);
+  renderCustomerTable(isYTD?YTD_CUSTOMERS:WEEK_DATA[period].customers);
+  drawChart(isYTD?null:period);
+}
+
+function showTab(tabId,navEl){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  navEl.classList.add('active');
+}
+
+updateTab1('YTD');
+renderGrowerCards();
+</script>
+</body>
+</html>
